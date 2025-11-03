@@ -1,0 +1,190 @@
+// Nueva clase para la pantalla de selección de personaje
+// Agrégala como una nueva pestaña en tu proyecto
+class SeleccionPersonaje {
+  String personajeSeleccionado = null;
+  int animFrame = 1;
+  int frameCounter = 0;
+  
+  void mostrar() {
+    // Fondo degradado
+    for (int i = 0; i < height; i++) {
+      float inter = map(i, 0, height, 0, 1);
+      int c = lerpColor(color(20, 20, 50), color(50, 20, 70), inter);
+      stroke(c);
+      line(0, i, width, i);
+    }
+    
+    // Animación de sprites
+    frameCounter++;
+    if (frameCounter % 10 == 0) {
+      animFrame++;
+      if (animFrame > 6) animFrame = 1;
+    }
+    
+    // Título
+    fill(255, 255, 100);
+    textAlign(CENTER);
+    textSize(56);
+    text("ELIGE TU PERSONAJE", width/2, 100);
+    
+    // Subtítulo
+    fill(200, 200, 255);
+    textSize(22);
+    text("Haz clic en tu personaje favorito", width/2, 145);
+    
+    // Dimensiones de las tarjetas
+    float cardW = 280;
+    float cardH = 400;
+    float spacing = 80;
+    float totalWidth = cardW * 2 + spacing;
+    float startX = (width - totalWidth) / 2;
+    float cardY = 200;
+    
+    // Tarjeta BOY
+    float boyX = startX;
+    boolean hoverBoy = mouseX > boyX && mouseX < boyX + cardW && 
+                       mouseY > cardY && mouseY < cardY + cardH;
+    
+    // Efecto de elevación en hover
+    float boyElevation = hoverBoy ? -10 : 0;
+    
+    // Sombra
+    fill(0, 0, 0, 80);
+    noStroke();
+    rect(boyX + 10, cardY + 10, cardW, cardH, 20);
+    
+    // Tarjeta
+    if (hoverBoy) {
+      fill(80, 150, 255, 240);
+      strokeWeight(5);
+      stroke(255, 255, 100);
+    } else {
+      fill(60, 120, 200, 220);
+      strokeWeight(3);
+      stroke(150, 180, 255);
+    }
+    rect(boyX, cardY + boyElevation, cardW, cardH, 20);
+    
+    // Círculo decorativo de fondo
+    noStroke();
+    fill(100, 170, 255, 100);
+    circle(boyX + cardW/2, cardY + boyElevation + 140, 180);
+    
+    // Sprite animado del Boy
+    if (boy != null && boy[animFrame] != null) {
+      imageMode(CENTER);
+      image(boy[animFrame], boyX + cardW/2, cardY + boyElevation + 140, 120, 120);
+      imageMode(CORNER);
+    }
+    
+    // Nombre del personaje
+    fill(255);
+    textSize(42);
+    text("BOY", boyX + cardW/2, cardY + boyElevation + 260);
+    
+    // Características
+    fill(230, 230, 255);
+    textSize(16);
+    text("⚡ Rápido y ágil", boyX + cardW/2, cardY + boyElevation + 300);
+    text("🎯 Preciso", boyX + cardW/2, cardY + boyElevation + 325);
+    text("💪 Resistente", boyX + cardW/2, cardY + boyElevation + 350);
+    
+    // Tarjeta GIRL
+    float girlX = startX + cardW + spacing;
+    boolean hoverGirl = mouseX > girlX && mouseX < girlX + cardW && 
+                        mouseY > cardY && mouseY < cardY + cardH;
+    
+    float girlElevation = hoverGirl ? -10 : 0;
+    
+    // Sombra
+    fill(0, 0, 0, 80);
+    noStroke();
+    rect(girlX + 10, cardY + 10, cardW, cardH, 20);
+    
+    // Tarjeta
+    if (hoverGirl) {
+      fill(255, 120, 180, 240);
+      strokeWeight(5);
+      stroke(255, 255, 100);
+    } else {
+      fill(220, 80, 150, 220);
+      strokeWeight(3);
+      stroke(255, 150, 200);
+    }
+    rect(girlX, cardY + girlElevation, cardW, cardH, 20);
+    
+    // Círculo decorativo de fondo
+    noStroke();
+    fill(255, 150, 200, 100);
+    circle(girlX + cardW/2, cardY + girlElevation + 140, 180);
+    
+    // Sprite animado de la Girl
+    if (girl != null && girl[animFrame] != null) {
+      imageMode(CENTER);
+      image(girl[animFrame], girlX + cardW/2, cardY + girlElevation + 140, 120, 120);
+      imageMode(CORNER);
+    }
+    
+    // Nombre del personaje
+    fill(255);
+    textSize(42);
+    text("GIRL", girlX + cardW/2, cardY + girlElevation + 260);
+    
+    // Características
+    fill(255, 230, 240);
+    textSize(16);
+    text("✨ Elegante", girlX + cardW/2, cardY + girlElevation + 300);
+    text("🌟 Habilidosa", girlX + cardW/2, cardY + girlElevation + 325);
+    text("💖 Determinada", girlX + cardW/2, cardY + girlElevation + 350);
+    
+    // Botón de volver
+    fill(80, 80, 100, 200);
+    stroke(150);
+    strokeWeight(2);
+    rect(20, 20, 120, 50, 10);
+    fill(255);
+    textSize(20);
+    text("← VOLVER", 80, 52);
+    
+    noStroke();
+    textAlign(LEFT);
+  }
+  
+  String click(float mx, float my) {
+    // Dimensiones de las tarjetas (mismas que en mostrar)
+    float cardW = 280;
+    float cardH = 400;
+    float spacing = 80;
+    float totalWidth = cardW * 2 + spacing;
+    float startX = (width - totalWidth) / 2;
+    float cardY = 200;
+    
+    float boyX = startX;
+    float girlX = startX + cardW + spacing;
+    
+    // Clic en Boy
+    if (mx > boyX && mx < boyX + cardW && 
+        my > cardY && my < cardY + cardH) {
+      personajeSeleccionado = "boy";
+      return "juego";
+    }
+    
+    // Clic en Girl
+    if (mx > girlX && mx < girlX + cardW && 
+        my > cardY && my < cardY + cardH) {
+      personajeSeleccionado = "girl";
+      return "juego";
+    }
+    
+    // Clic en botón Volver
+    if (mx > 20 && mx < 140 && my > 20 && my < 70) {
+      return "menu";
+    }
+    
+    return null;
+  }
+  
+  String getPersonajeSeleccionado() {
+    return personajeSeleccionado;
+  }
+}
