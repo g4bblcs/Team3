@@ -1,0 +1,95 @@
+import processing.sound.*;
+
+// --- Variables globales ---
+PImage bg, bttn_p, bttn_tut, bttn_ex;
+PImage[] boy = new PImage[7];
+PImage[] girl = new PImage[7];
+Menu menu;
+tutorial tut;
+SeleccionPersonaje seleccion;
+Juego juego;
+String pantalla = "menu", personaje;
+
+void setup() {
+  fullScreen();
+  frameRate(30);
+  bg = loadImage("bg.png");
+  bttn_p = loadImage("play.png");
+  bttn_tut = loadImage("tutorial.png");
+  bttn_ex = loadImage("exit.png");
+  
+  for (int i = 1; i <= 6; i++) {
+    boy[i] = loadImage("boy0" + i + ".png");
+    girl[i] = loadImage("girl0" + i + ".png");
+  }
+  
+
+  
+  menu = new Menu();
+  tut = new tutorial();
+  seleccion = new SeleccionPersonaje();
+}
+
+void draw() {
+  if (pantalla.equals("menu")) {
+    menu.mpage();
+  } else if (pantalla.equals("seleccion")) {
+    seleccion.mostrar();
+  } else if (pantalla.equals("juego")) {
+    // Mostrar el juego
+    if (juego != null) {
+      if (frameCount%900 != 0){
+      juego.actualizar();
+      }
+    }
+  } else if (pantalla.equals("tutorial")) {
+    tut.tutpage();
+  } else if (pantalla.equals("salir")) {
+    exit();
+  }
+}
+
+void mousePressed() {
+  String nuevaPantalla = null;
+  
+  if (pantalla.equals("menu")) {
+    nuevaPantalla = menu.click(mouseX, mouseY);
+    if (nuevaPantalla != null) {
+      pantalla = nuevaPantalla;
+    }
+    
+  } else if (pantalla.equals("seleccion")) {
+    nuevaPantalla = seleccion.click(mouseX, mouseY);
+    if (nuevaPantalla != null) {
+      if (nuevaPantalla.equals("juego")) {
+        // Crear el juego con el personaje seleccionado
+        personaje = seleccion.getPersonajeSeleccionado();
+        PImage[] spritesJuego = personaje.equals("boy") ? boy : girl;
+        juego = new Juego(personaje, spritesJuego);
+      }
+      pantalla = nuevaPantalla;
+    }
+  } else if (pantalla.equals("juego")) {
+    // Detectar clic en botón de volver al menú
+    if (juego != null && juego.clickVolver(mouseX, mouseY)) {
+      pantalla = "menu";
+      juego = null;
+    }
+  } else if (pantalla.equals("tutorial")) {
+    // Cualquier clic en tutorial vuelve al menú
+    pantalla = "menu";
+  }
+}
+
+void keyPressed() {
+  // Manejar teclas en el juego
+  if (pantalla.equals("juego") && juego != null) {
+    juego.teclaPresionada(key);
+    
+    if (key == ESC) {
+      key = 0; 
+      pantalla = "menu";
+      juego = null;
+    }
+  }
+}
