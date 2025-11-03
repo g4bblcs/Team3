@@ -1,0 +1,344 @@
+
+  
+class JefeFinal {  
+  
+  float playerX = width/2 - 20;
+  float playerY = 50; // En la parte superior del camino
+  float playerWidth = 40;
+  float playerHeight = 50;
+  float playerSpeed = 6;
+  
+  // Variables del camino vertical (pasillo)
+  float roadX; // Donde empieza el camino
+  float roadWidth; // Ancho del pasillo
+  
+  // Variables de munición
+  int ammo = 20; // Número limitado de disparos
+  int maxAmmo = 20;
+  
+  // Variables del jefe (abajo en el camino)
+  float bossX = width/2 - 60;
+  float bossY = height - 100;
+  float bossWidth = 120;
+  float bossHeight = 80;
+  int bossHealth = 15;
+  int bossMaxHealth = 15;
+  boolean bossHit = false;
+  int bossHitTimer = 0;
+  float bossSpeed = 3;
+  float bossDirection = 1;
+  
+  // ArrayList de proyectiles
+  ArrayList<Projectile> projectiles = new ArrayList<Projectile>();
+  
+  // Variables de control
+  int score = 0;
+  String gameState = "JUGANDO"; // JUGANDO, GANO, PERDIO
+  int shootTimer = 0;
+  
+  // Sistema de apuntado
+  float aimAngle = 0;
+  
+  void inicializar() {
+    playerX = width/2 - 20;
+    playerY = 50;
+    roadX = width/3;
+    roadWidth = width/3;
+    bossX = width/2 - 60;
+    bossY =height - 100;
+    bossHealth = bossMaxHealth;
+    projectiles.clear();
+    ammo = maxAmmo;
+    gameState = "JUGANDO";
+  }
+  
+  void actualizar() {
+    background(20, 20, 30);
+    
+    if (gameState.equals("JUGANDO")) {
+      playingGame();
+    } else if (gameState.equals("GANO")) {
+      mostrarVictoria();
+    } else if (gameState.equals("PERDIO")) {
+      mostrarDerrota();
+    }
+  }
+  
+  void playingGame() {
+    // Dibujar área fuera del camino (oscura)
+    fill(10, 10, 20);
+    rect(0, 0, roadX, height); // Izquierda
+    rect(roadX + roadWidth, 0, width - roadX - roadWidth, height); // Derecha
+    
+    // Dibujar el camino vertical (pasillo)
+    fill(60, 60, 70);
+    rect(roadX, 0, roadWidth, height);
+    
+    // Líneas del camino
+    stroke(200, 200, 100);
+    strokeWeight(2);
+    for (int i = 0; i < height; i += 40) {
+      line(roadX + roadWidth / 2, i, roadX + roadWidth / 2, i + 20);
+    }
+    
+    // Bordes del camino
+    stroke(255, 255, 255);
+    strokeWeight(4);
+    line(roadX, 0, roadX, height); // Borde izquierdo
+    line(roadX + roadWidth, 0, roadX + roadWidth, height); // Borde derecho
+    
+    // Mover jugador (solo izquierda y derecha dentro del camino)
+    if (keyPressed) {
+      if (key == 'a' || key == 'A' || keyCode == LEFT) {
+        if (playerX > roadX + 10) playerX -= playerSpeed;
+      }
+      if (key == 'd' || key == 'D' || keyCode == RIGHT) {
+        if (playerX < roadX + roadWidth - playerWidth - 10) playerX += playerSpeed;
+      }
+    }
+    
+    // Calcular ángulo de apuntado hacia el mouse
+    float centerX = playerX + playerWidth / 2;
+    float centerY = playerY + playerHeight / 2;
+    aimAngle = atan2(mouseY - centerY, mouseX - centerX);
+    
+    // Dibujar jugador
+    fill(78, 205, 196);
+    rect(playerX, playerY, playerWidth, playerHeight);
+    
+    // Línea de apuntado
+    stroke(255, 255, 0);
+    strokeWeight(3);
+    float lineLength = 60;
+    line(centerX, centerY, 
+         centerX + cos(aimAngle) * lineLength, 
+         centerY + sin(aimAngle) * lineLength);
+    
+    // Hitbox del jugador
+    noFill();
+    stroke(0, 255, 0);
+    strokeWeight(2);
+    rect(playerX, playerY, playerWidth, playerHeight);
+    
+    // Movimiento del jefe (izquierda y derecha en el fondo del camino)
+    bossX += bossSpeed * bossDirection;
+    if (bossX <= roadX + 20 || bossX >= roadX + roadWidth - bossWidth - 20) {
+      bossDirection *= -1;
+    }
+    
+    // Reducir cooldown de disparo
+    if (shootTimer > 0) shootTimer--;
+    
+    // Actualizar y dibujar proyectiles del jugador
+    for (int i = projectiles.size() - 1; i >= 0; i--) {
+      Projectile proj = projectiles.get(i);
+      proj.update();
+      proj.display();
+      
+      // Verificar colisión con el jefe
+      if (checkCollision(proj.x, proj.y, proj.width, proj.height,
+                         bossX, bossY, bossWidth, bossHeight)) {
+        bossHealth--;
+        bossHit = true;
+        bossHitTimer = 10;
+        projectiles.remove(i);
+        score++;
+        
+        // Verificar si el jefe fue derrotado
+        if (bossHealth <= 0) {
+          gameState = "GANO";
+        }
+      } else if (proj.y < 0 || proj.y > height || proj.x < roadX || proj.x > roadX + roadWidth) {
+        // Eliminar proyectiles fuera del camino
+        projectiles.remove(i);
+      }
+    }
+    
+    // Efecto de golpe
+    if (bossHitTimer > 0) {
+      bossHitTimer--;
+      if (bossHitTimer == 0) bossHit = false;
+    }
+    
+    // Dibujar jefe
+    if (bossHit) {
+      fill(255, 255, 255);
+    } else {
+      fill(231, 76, 60);
+    }
+    rect(bossX, bossY, bossWidth, bossHeight);
+    
+    // Cara del jefe (ojos)
+    fill(0);
+    ellipse(bossX + 30, bossY + 25, 15, 15);
+    ellipse(bossX + 90, bossY + 25, 15, 15);
+    
+    // Hitbox del jefe
+    noFill();
+    if (bossHit) {
+      stroke(255, 255, 0);
+    } else {
+      stroke(255, 0, 0);
+    }
+    strokeWeight(3);
+    rect(bossX, bossY, bossWidth, bossHeight);
+    
+    // Barra de vida del jefe
+    float barWidth = 120;
+    float barHeight = 12;
+    float barX = bossX;
+    float barY = bossY - 25;
+    
+    fill(51, 51, 51);
+    rect(barX, barY, barWidth, barHeight);
+    
+    fill(255, 0, 0);
+    float healthWidth = (float)bossHealth / bossMaxHealth * barWidth;
+    rect(barX, barY, healthWidth, barHeight);
+    
+    noFill();
+    stroke(255);
+    strokeWeight(2);
+    rect(barX, barY, barWidth, barHeight);
+    
+    // UI - Panel de información
+    fill(0, 0, 0, 180);
+    rect(10, 10, 200, 110);
+    
+    fill(255);
+    textSize(18);
+    textAlign(LEFT);
+    text("MUNICIÓN: " + ammo + "/" + maxAmmo, 20, 35);
+    text("IMPACTOS: " + score, 20, 60);
+    text("VIDA JEFE: " + bossHealth + "/" + bossMaxHealth, 20, 85);
+    
+    // Advertencia de munición baja
+    if (ammo <= 5 && ammo > 0) {
+      fill(255, 200, 0);
+      textSize(16);
+      text("¡MUNICIÓN BAJA!", 20, 110);
+    } else if (ammo == 0) {
+      fill(255, 0, 0);
+      textSize(16);
+      text("¡SIN MUNICIÓN!", 20, 110);
+    }
+    
+    // Instrucciones
+    fill(0, 0, 0, 180);
+    rect(10, height - 90, 180, 80);
+    fill(255);
+    textSize(14);
+    text("A/D: Mover", 20, height - 65);
+    text("Mouse: Apuntar", 20, height - 45);
+    text("Click: Disparar", 20, height - 25);
+    
+    // Verificar si perdió (sin munición y no mató al jefe)
+    if (ammo == 0 && projectiles.size() == 0 && bossHealth > 0) {
+      gameState = "PERDIO";
+    }
+  }
+  
+  void mostrarVictoria() {
+    background(0, 100, 0);
+    fill(255, 255, 0);
+    textSize(64);
+    textAlign(CENTER);
+    text("¡JEFE DERROTADO!", width / 2, height / 2 - 50);
+    
+    textSize(32);
+    fill(255);
+    text("Impactos: " + score, width / 2, height / 2 + 20);
+    text("Munición restante: " + ammo, width / 2, height / 2 + 60);
+    
+    textSize(20);
+    text("Presiona R para reiniciar", width / 2, height / 2 + 120);
+  }
+  
+  void mostrarDerrota() {
+    background(100, 0, 0);
+    fill(255, 0, 0);
+    textSize(64);
+    textAlign(CENTER);
+    text("GAME OVER", width / 2, height / 2 - 50);
+    
+    textSize(32);
+    fill(255);
+    text("¡Te quedaste sin munición!", width / 2, height / 2 + 20);
+    text("Impactos: " + score + "/" + bossMaxHealth, width / 2, height / 2 + 60);
+    
+    textSize(20);
+    text("Presiona R para reiniciar", width / 2, height / 2 + 120);
+  }
+  
+  void onMousePressed() {
+    if (gameState.equals("JUGANDO") && shootTimer == 0 && ammo > 0) {
+      float centerX = playerX + playerWidth / 2;
+      float centerY = playerY + playerHeight / 2;
+      projectiles.add(new Projectile(centerX, centerY, aimAngle));
+      shootTimer = 20; // Cooldown de 20 frames
+      ammo--; // Reducir munición
+    }
+  }
+  
+  void onKeyPressed(char key) {
+    // Reiniciar juego
+    if ((key == 'r' || key == 'R') && !gameState.equals("jugando")) {
+      resetGame();
+    }
+  }
+  
+  void resetGame() {
+    gameState = "JUGANDO";
+    playerX = 400;
+    playerY = 50; // Reinicia en la parte superior
+    ammo = maxAmmo;
+    bossX = 350;
+    bossY = 500;
+    bossHealth = bossMaxHealth;
+    score = 0;
+    projectiles.clear();
+    bossDirection = 1;
+  }
+  
+  // Función de detección de colisión rectangular
+  boolean checkCollision(float x1, float y1, float w1, float h1,
+                         float x2, float y2, float w2, float h2) {
+    return x1 < x2 + w2 &&
+           x1 + w1 > x2 &&
+           y1 < y2 + h2 &&
+           y1 + h1 > y2;
+  }
+  
+  // Clase Projectile con sistema de apuntado
+  class Projectile {
+    float x, y;
+    float width = 12;
+    float height = 12;
+    float speed = 8;
+    float angle;
+    float vx, vy;
+    
+    Projectile(float x, float y, float angle) {
+      this.x = x;
+      this.y = y;
+      this.angle = angle;
+      this.vx = cos(angle) * speed;
+      this.vy = sin(angle) * speed;
+    }
+    
+    void update() {
+      x += vx;
+      y += vy;
+    }
+    
+    void display() {
+      fill(255, 200, 0);
+      ellipse(x, y, width, height);
+      
+      noFill();
+      stroke(255, 255, 0);
+      strokeWeight(2);
+      ellipse(x, y, width, height);
+    }
+  }
+}
