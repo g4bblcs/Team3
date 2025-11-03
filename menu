@@ -1,0 +1,38 @@
+class Menu {
+  float btW, btH, btX, btY;
+  
+  Menu() {
+    btW = 107;
+    btH = 27;
+    btX = width / 1.4 - btW;
+    btY = height - height / 3.5;
+  }
+  
+  void mpage() {
+    image(bg, 0, 0, width, height + 60);
+    image(bttn_p, btX, btY, btW * 2, btH * 2);
+    image(bttn_tut, btX, btY + 60, btW * 2, btH * 2);
+    image(bttn_ex, btX, btY + 120, btW * 2, btH * 2);
+  }
+  
+  String click(float mx, float my) {
+    if (pantalla.equals("menu")) {
+      // Botón PLAY - Ahora va a la pantalla de selección
+      if (mx > btX && mx < btX + btW * 2 &&
+          my > btY && my < btY + btH * 2) {
+        return "seleccion";  // CAMBIO AQUÍ: antes era "juego"
+      } 
+      // Botón TUTORIAL
+      else if (mx > btX && mx < btX + btW * 2 &&
+               my > btY + 60 && my < btY + 60 + btH * 2) {
+        return "tutorial";
+      } 
+      // Botón EXIT
+      else if (mx > btX && mx < btX + btW * 2 &&
+               my > btY + 120 && my < btY + 120 + btH * 2) {
+        return "salir";
+      }
+    }
+    return null;
+  }
+}
