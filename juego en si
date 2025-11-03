@@ -1,0 +1,242 @@
+class Juego {
+  float px = 0;
+  float py = 50; // Personaje arriba
+  boolean vivo = true;
+  float d;
+  int vidas = 3;
+  int puntos = 0;
+  int ultimoNivelVida = 0; // Para controlar cuándo dar vida extra
+  Player jugador;
+  ArrayList<Cuadrado> cuadrados = new ArrayList<Cuadrado>();
+  ArrayList<Puntos> punt = new ArrayList<Puntos>();
+  String personajeSeleccionado;
+  PImage[] spritesPersonaje;
+  int frameActual = 1;
+  int contadorFrame = 0;
+  
+  int limiteMS = 30000;
+  int inicioMS = 0;
+  boolean tiempoAgotado = false;
+
+  // Constructor
+  Juego(String personaje, PImage[] sprites) {
+    personajeSeleccionado = personaje;
+    spritesPersonaje = sprites;
+    jugador = new Player();
+    inicializar();
+  }
+
+  // Inicializar o reiniciar el juego
+  void inicializar() {
+    vidas = 3;
+    puntos = 0;
+    vivo = true;
+    tiempoAgotado = false;
+    inicioMS = millis();
+    px = width/2;
+    py = 50; // Posición fija del personaje arriba
+    cuadrados.clear();
+    punt.clear();
+    // Crear cuadrados que empiezan desde abajo
+    for (int i = 0; i < 5; i++) {
+      cuadrados.add(new Cuadrado(random(width/3 + 60, 2*width/3 - 30), height + i * 150));
+    }
+    for (int i = 0; i < 5; i++) {
+      punt.add(new Puntos(random(width/3 + 60, 2*width/3 - 30), height + i * 150));
+    }
+  }
+
+  // Método principal de actualización y dibujado
+  void actualizar() {
+    
+    int transcurrido = millis() - inicioMS;
+    int restante = max(0, limiteMS - transcurrido);
+    if (restante == 0 && vivo) {
+      vivo = false;
+      tiempoAgotado = true;
+    }  
+    // Fondo
+    background(0);
+    noStroke();
+
+    // Zona de juego (roja)
+    fill(255, 0, 0);
+    rect(width/3, 0, width/3, height);
+
+    // Interfaz - Vidas y puntos
+    fill(255);
+    textAlign(LEFT);
+    textSize(24);
+    text("Vidas: " + vidas, 20, 40);
+    text("Puntos: " + puntos, 20, 75);
+    text("tiempo: " + nf(restante/1000, 2) + " s", 20, 110);
+
+    // Botón de volver (esquina superior derecha)
+    fill(100);
+    rect(width - 120, 20, 100, 40, 10);
+    fill(255);
+    textAlign(CENTER);
+    textSize(18);
+    text("MENÚ", width - 70, 47);
+
+    if (vivo) {
+      // Actualizar y mostrar los cuadrados (enemigos)
+      for (int i = cuadrados.size() - 1; i >= 0; i--) {
+        Cuadrado c = cuadrados.get(i);
+        c.mover();
+        c.mostrar();
+
+        // Detección de colisión con cuadrados
+        d = dist(px, py, c.x + 10, c.y + 10);
+        if (d < 25 + 14) { // Ajustado para el tamaño del sprite
+          vidas--;
+          cuadrados.remove(i);
+          cuadrados.add(new Cuadrado(random(width/3 + 60, 2*width/3 - 30), height + 50));
+
+          if (vidas <= 0) {
+            vivo = false;
+          }
+        } else if (c.y < -30) {
+          // Si el cuadrado sale por arriba sin colisionar
+          cuadrados.remove(i);
+          cuadrados.add(new Cuadrado(random(width/3 + 60, 2*width/3 - 30), height + 30));
+        }
+      }
+      
+      // Actualizar y mostrar los círculos de puntos
+      for (int i = punt.size() - 1; i >= 0; i--) {
+        Puntos p = punt.get(i);
+        p.mover();
+        p.mostrar();
+
+        // Detección de colisión con círculos de puntos
+        d = dist(px, py, p.x + 10, p.y + 10);
+        if (d < 25 + 10) { // Colisión para recoger el punto
+          punt.remove(i);
+          punt.add(new Puntos(random(width/3 + 60, 2*width/3 - 30), height + 50));
+          puntos++; // Sumar puntos al recogerlo
+        } else if (p.y < -30) {
+          // Si el círculo sale por arriba sin recogerlo
+          punt.remove(i);
+          punt.add(new Puntos(random(width/3 + 60, 2*width/3 - 30), height + 30));
+        }
+      }
+      
+      // Aumentar dificultad cada 10 puntos
+      if (puntos % 10 == 0 && puntos > 0) {
+        for (Cuadrado cuad : cuadrados) {
+          cuad.vel = min(cuad.vel + 0.5, 10); // Máximo 10 de velocidad
+        }
+        for (Puntos pt : punt) {
+          pt.vel = min(pt.vel + 0.5, 10);
+        }
+      }
+
+      jugador.mostrar();
+    } else {
+      // Pantalla de Game Over
+      fill(0, 150);
+      rect(0, 0, width, height);
+
+      fill(255, 0, 0);
+      textAlign(CENTER, CENTER);
+      textSize(60);
+      text("GAME OVER", width/2, height/2 - 80);
+
+      fill(255);
+      textSize(30);
+      text("Puntos finales: " + puntos, width/2, height/2);
+
+      textSize(20);
+      text("Presiona R para reintentar", width/2, height/2 + 60);
+      text("o ESC para volver al menú", width/2, height/2 + 90);
+    }
+
+    textAlign(LEFT); // Restaurar alineación por defecto
+  }
+  
+
+  boolean seAcabo() {
+    return tiempoAgotado && !vivo;
+  }  
+  // Detectar clic en botón de volver
+  boolean clickVolver(int mx, int my) {
+    return mx > width - 120 && mx < width - 20 && my > 20 && my < 60;
+  }
+
+  // Manejar teclas presionadas
+  void teclaPresionada(char tecla) {
+    if ((tecla == 'r' || tecla == 'R') && !vivo) {
+      inicializar();
+    }
+  }
+
+  // Clase interna Player
+  class Player {
+    void mostrar() {
+      // Animación del personaje
+      contadorFrame++;
+      if (contadorFrame % 8 == 0) { // Cambiar frame cada 8 frames
+        frameActual++;
+        if (frameActual > 6) frameActual = 1;
+      }
+
+      // Mover con el mouse, restringido a la zona roja
+      px = constrain(mouseX, width/3 + 30, 2*width/3 - 30);
+
+      // Dibujar sprite del personaje
+      imageMode(CENTER);
+      if (spritesPersonaje != null && spritesPersonaje[frameActual] != null) {
+        image(spritesPersonaje[frameActual], px, py, 50, 50);
+      } else {
+        // Si no hay sprite, dibujar círculo blanco
+        fill(255);
+        circle(px, py, 40);
+      }
+      imageMode(CORNER); // Restaurar modo por defecto
+    }
+  }
+
+  // Clase interna Cuadrado
+  class Cuadrado {
+    float x, y;
+    float vel = 3;
+
+    Cuadrado(float x_, float y_) {
+      x = x_;
+      y = y_;
+    }
+
+    void mover() {
+      y -= vel; // Mueve hacia arriba (resta en Y)
+    }
+
+    void mostrar() {
+      fill(255);
+      noStroke();
+      square(x, y, 20);
+    }
+  }
+}
+
+// Clase Puntos (fuera de la clase Juego)
+class Puntos {
+  float x, y;
+  float vel = 3;
+
+  Puntos(float x_, float y_) {
+    x = x_;
+    y = y_;
+  }
+
+  void mover() {
+    y -= vel; // Mueve hacia arriba (resta en Y)
+  }
+
+  void mostrar() {
+    fill(0, 255, 0); // Verde para diferenciar de los cuadrados
+    noStroke();
+    circle(x, y, 20);
+  }
+}
+
