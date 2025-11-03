@@ -1,4 +1,4 @@
-import processing.sound.*;
+//import processing.sound.*;
 
 // --- Variables globales ---
 PImage bg, bttn_p, bttn_tut, bttn_ex;
@@ -7,6 +7,7 @@ PImage[] girl = new PImage[7];
 Menu menu;
 tutorial tut;
 SeleccionPersonaje seleccion;
+JefeFinal jefe;
 Juego juego;
 String pantalla = "menu", personaje;
 
@@ -41,7 +42,18 @@ void draw() {
       if (frameCount%900 != 0){
       juego.actualizar();
       }
+      if(juego.seAcabo()){
+        jefe = new JefeFinal();
+        jefe.inicializar();
+        pantalla ="jefe";
+        juego = null;
+      }
     }
+  } else if (pantalla.equals("jefe")){
+    if(jefe != null){
+      jefe.actualizar();
+    } 
+      
   } else if (pantalla.equals("tutorial")) {
     tut.tutpage();
   } else if (pantalla.equals("salir")) {
@@ -75,6 +87,11 @@ void mousePressed() {
       pantalla = "menu";
       juego = null;
     }
+  
+  }else if (pantalla.equals("jefe")){
+    if(jefe != null) {
+      jefe.onMousePressed();
+    }  
   } else if (pantalla.equals("tutorial")) {
     // Cualquier clic en tutorial vuelve al menú
     pantalla = "menu";
@@ -91,5 +108,13 @@ void keyPressed() {
       pantalla = "menu";
       juego = null;
     }
+   }else if (pantalla.equals("jefe") && jefe != null) {
+     jefe.onKeyPressed(key);
+     
+     if(key == ESC) {
+       key = 0;
+       pantalla = "menu";
+       jefe = null;
+     }  
   }
 }
